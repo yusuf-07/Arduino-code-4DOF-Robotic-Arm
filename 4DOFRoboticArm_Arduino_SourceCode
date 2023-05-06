@@ -1,0 +1,173 @@
+// Include required libraries
+#include <Servo.h>
+
+// Define Servo Pins
+const int SERVO1_PIN = 2;
+const int SERVO2_PIN = 3;
+const int SERVO3_PIN = 4;
+const int SERVO4_PIN = 5;
+
+//Define DC Motor Pins 
+const int DC_MOTOR_PIN1 = 6;
+const int DC_MOTOR_PIN2 = 7;
+const int enablePin = 11;
+//const int enablePin2 = A0;
+
+//Define the LEDs Pins             
+const int LED1_PIN = 8;
+const int LED2_PIN = 9;
+const int LED3_PIN = 10;
+const int LED4_PIN = 12;
+const int LED5_PIN = 13;
+
+//Define the Potentiometers Pins
+const int POT1_PIN = A5;
+const int POT2_PIN = A4;
+const int POT3_PIN = A3;
+const int POT4_PIN = A2;
+const int POT5_PIN = A1;
+
+//Define Others
+const int PushButton_PIN = A0;
+
+// Create servo objects
+Servo servo1;
+Servo servo2;
+Servo servo3;
+Servo servo4;
+
+//Create DC Objects
+int motorSpeed = 0;
+int motorDirection = 1;
+int buttonState = 0;
+int lastButtonState = 0;
+
+// Define variables
+int pot1Value = 0;
+int pot2Value = 0;
+int pot3Value = 0;
+int pot4Value = 0;
+int pot5Value = 0;
+int prevPot5Value = 0;
+int dcMotorSpeed = 0;
+int led1Value = 0;
+int led2Value = 0;
+int led3Value = 0;
+int led4Value = 0;
+int led5Value = 0;
+
+void setup() {
+  // Initialize servo objects
+  servo1.attach(SERVO1_PIN);
+  servo2.attach(SERVO2_PIN);
+  servo3.attach(SERVO3_PIN);
+  servo4.attach(SERVO4_PIN);
+
+  // Initialize DC motor pins
+  pinMode(DC_MOTOR_PIN1, OUTPUT);
+  pinMode(DC_MOTOR_PIN2, OUTPUT);
+  pinMode(enablePin, OUTPUT);
+  //pinMode(enablePin2, OUTPUT);
+
+  //Set button pin as input
+  pinMode(PushButton_PIN, INPUT_PULLUP);
+
+  // Initialize LED pins
+  pinMode(LED1_PIN, OUTPUT);
+  pinMode(LED2_PIN, OUTPUT);
+  pinMode(LED3_PIN, OUTPUT);
+  pinMode(LED4_PIN, OUTPUT);
+  pinMode(LED5_PIN, OUTPUT);
+
+  // Initialize serial communication
+  Serial.begin(9600);
+}
+
+void loop() {
+  // read potentiometer values
+  int pot1Value = analogRead(POT1_PIN);
+  int pot2Value = analogRead(POT2_PIN);
+  int pot3Value = analogRead(POT3_PIN);
+  int pot4Value = analogRead(POT4_PIN);
+  int pot5Value = analogRead(POT5_PIN);
+
+  // map potentiometer values to servo angles
+  int servo1Angle = map(pot1Value, 0, 1023, 0, 180);
+  int servo2Angle = map(pot2Value, 0, 1023, 0, 180);
+  int servo3Angle = map(pot3Value, 0, 1023, 0, 180);
+  int servo4Angle = map(pot4Value, 0, 1023, 0, 180);
+
+  // map the potentiometer value to the motor speed
+  motorSpeed = map(pot5Value, 0, 1023, 0, 255);
+
+
+  // control servos based on potentiometer values
+  servo1.write(servo1Angle);
+  servo2.write(servo2Angle);
+  servo3.write(servo3Angle);
+  servo4.write(servo4Angle);
+
+  // map potentiometer value to LED intensity
+  int led1Intensity = map(pot1Value, 0, 1023, 0, 255);
+  int led2Intensity = map(pot2Value, 0, 1023, 0, 255);
+  int led3Intensity = map(pot3Value, 0, 1023, 0, 255);
+  int led4Intensity = map(pot4Value, 0, 1023, 0, 255);
+  int led5Intensity = map(pot5Value, 0, 1023, 0, 255);
+
+  // control LEDs based on potentiometer values
+  analogWrite(LED1_PIN, led1Intensity);
+  analogWrite(LED2_PIN, led2Intensity);
+  analogWrite(LED3_PIN, led3Intensity);
+  analogWrite(LED4_PIN, led4Intensity);
+  analogWrite(LED5_PIN, led5Intensity);
+
+  // set the motor speed and direction
+  analogWrite(enablePin, motorSpeed);
+  //analogWrite(enablePin2, motorSpeed);
+  digitalWrite(DC_MOTOR_PIN1, motorDirection == 1 ? HIGH : LOW);
+  digitalWrite(DC_MOTOR_PIN2, motorDirection == -1 ? HIGH : LOW);
+  
+  // read the button state
+  buttonState = digitalRead(PushButton_PIN);
+  
+  // if the button state has changed
+  if (buttonState != lastButtonState) {
+    // if the button is pressed
+    if (buttonState == LOW) {
+      //stop motor 
+      analogWrite(enablePin,0);
+      digitalWrite(DC_MOTOR_PIN1,LOW);
+      digitalWrite(DC_MOTOR_PIN2, LOW);
+      delay(500);
+      
+      // reverse the motor direction
+      analogWrite(enablePin,motorSpeed);
+      digitalWrite(DC_MOTOR_PIN1, motorDirection == -1 ? HIGH : LOW);
+  	  digitalWrite(DC_MOTOR_PIN2, motorDirection == 1 ? HIGH : LOW);
+      delay(100);
+      
+      motorDirection = -motorDirection;
+    }
+    // remember the button state
+    lastButtonState = buttonState;
+  }
+
+
+
+
+  /* read potentiometer 5 value and control DC motor and LED
+  int pot5Diff = pot5Value - prevPot5Value;
+  if (pot5Diff > 0) {
+    digitalWrite(DC_MOTOR_PIN1, HIGH);
+    analogWrite(LED5_PIN, led5Intensity);
+  } else if (pot5Diff < 0) {
+    digitalWrite(DC_MOTOR_PIN1, LOW);
+    analogWrite(LED5_PIN, led5Intensity);
+  }*/
+
+  // save previous potentiometer 5 value
+  prevPot5Value = pot5Value;
+
+  // delay to prevent rapid updates
+  delay(50);
+}
